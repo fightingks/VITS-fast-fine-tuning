@@ -217,7 +217,7 @@ def latest_checkpoint_path(dir_path, regex="G_[0-9]*.pth"):
     return x
 
 
-def oldest_checkpoint_path(dir_path, regex="G_[0-9]*.pth", preserved=4):
+def oldest_checkpoint_path(dir_path, regex="G_[0-9]*.pth", preserved=1):
     f_list = glob.glob(os.path.join(dir_path, regex))
     f_list.sort(key=lambda f: extract_digits(f))
     if len(f_list) > preserved:
