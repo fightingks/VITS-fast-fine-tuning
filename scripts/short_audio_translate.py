@@ -4,12 +4,14 @@ import json
 import torchaudio
 import argparse
 import torch
+from collections import deque
 
 lang2token = {
-            'zh': "[ZH]",
-            'ja': "[JA]",
-            "en": "[EN]",
-        }
+    'zh': "[ZH]",
+    'ja': "[JA]",
+    "en": "[EN]",
+}
+
 def transcribe_one(audio_path):
     # load audio and pad/trim it to fit 30 seconds
     audio = whisper.load_audio(audio_path)
@@ -29,10 +31,12 @@ def transcribe_one(audio_path):
     # print the recognized text
     print(result.text)
     return lang, result.text
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--languages", default="CJE")
     parser.add_argument("--whisper_size", default="medium")
+    parser.add_argument("--last_file", type=str, help="Path to the last saved annotation file (optional)", default=None)
     args = parser.parse_args()
     if args.languages == "CJE":
         lang2token = {
@@ -60,62 +64,81 @@ if __name__ == "__main__":
         hps = json.load(f)
     target_sr = hps['data']['sampling_rate']
     processed_files = 0
+    speaker = list(os.walk(parent_dir))[0][1][0]
+    parent_dir += speaker
+
+    # 初始化保存文件的队列
+    saved_files_queue = deque(maxlen=4)  # 最多保存4个文件
+    save_interval = 100  # 每100次循环保存一次
+
+    # 如果提供了上次的文件，读取上次的文件内容
+    if args.last_file and os.path.exists(args.last_file):
+        with open(args.last_file, 'r', encoding='utf-8') as f:
+            last_saved_lines = f.readlines()
+        last_saved_files = [line.split("|")[0] for line in last_saved_lines]
+        print(f"Resuming from last saved file: {args.last_file}")
+    else:
+        last_saved_files = []
+        print("No last saved file provided. Starting from scratch.")
 
     for i, wavfile in enumerate(list(os.walk(parent_dir))[0][2]):
         # try to load file as audio
         if wavfile.startswith("processed_"):
             continue
+        wavfile_path = os.path.join(parent_dir, wavfile)
+        if wavfile_path in last_saved_files:
+            print(f"Skipping already processed file: {wavfile}")
+            continue
         try:
-            wav, sr = torchaudio.load(os.path.join(parent_dir, wavfile), frame_offset=0, num_frames=-1, normalize=True,
-                                        channels_first=True)
+            wav, sr = torchaudio.load(wavfile_path, frame_offset=0, num_frames=-1, normalize=True,
+                                      channels_first=True)
             wav = wav.mean(dim=0).unsqueeze(0)
             if sr != target_sr:
                 wav = torchaudio.transforms.Resample(orig_freq=sr, new_freq=target_sr)(wav)
             if wav.shape[1] / sr > 20:
                 print(f"{wavfile} too long, ignoring\n")
-            # save_path = parent_dir + "/" + f"processed_{i}.wav"
-            # torchaudio.save(save_path, wav, target_sr, channels_first=True)
             # transcribe text
-            save_path = os.path.join(parent_dir, wavfile)
-            lang, text = transcribe_one(save_path)
+            lang, text = transcribe_one(wavfile_path)
             if lang not in lang2token:
                 print(f"{lang} not supported, ignoring\n")
                 continue
             text = lang2token[lang] + text + lang2token[lang] + "\n"
-            speaker_annos.append(save_path + "|" + text)
-            
+            speaker_annos.append(wavfile_path + "|" + text)
             processed_files += 1
             print(f"Processed: {processed_files}/{total_files}")
-        except:
+
+            # 每100次循环保存一次文件
+            if processed_files % save_interval == 0:
+                save_file_path = f"short_character_anno_{processed_files}.txt"
+                with open(save_file_path, 'w', encoding='utf-8') as f:
+                    for line in speaker_annos:
+                        f.write(line)
+                print(f"Saved annotation to {save_file_path}")
+                speaker_annos.clear()  # 清空已保存的注释
+
+                # 将当前保存的文件路径加入队列
+                saved_files_queue.append(save_file_path)
+
+                # 如果队列已满，删除最旧的文件
+                if len(saved_files_queue) == saved_files_queue.maxlen:
+                    oldest_file = saved_files_queue[0]
+                    print(f"Deleting oldest file: {oldest_file}")
+                    os.remove(oldest_file)
+
+        except Exception as e:
+            print(f"Error processing file {wavfile}: {e}")
             continue
 
-    # # clean annotation
-    # import argparse
-    # import text
-    # from utils import load_filepaths_and_text
-    # for i, line in enumerate(speaker_annos):
-    #     path, sid, txt = line.split("|")
-    #     cleaned_text = text._clean_text(txt, ["cjke_cleaners2"])
-    #     cleaned_text += "\n" if not cleaned_text.endswith("\n") else ""
-    #     speaker_annos[i] = path + "|" + sid + "|" + cleaned_text
-    # write into annotation
-    if len(speaker_annos) == 0:
-        print("Warning: no short audios found, this IS expected if you have only uploaded long audios, videos or video links.")
-        print("this IS NOT expected if you have uploaded a zip file of short audios. Please check your file structure or make sure your audio language is supported.")
-    with open("short_character_anno.txt", 'w', encoding='utf-8') as f:
-        for line in speaker_annos:
-            f.write(line)
+    # 如果最后还有未保存的内容，保存到文件
+    if speaker_annos:
+        save_file_path = f"short_character_anno_{processed_files}.txt"
+        with open(save_file_path, 'w', encoding='utf-8') as f:
+            for line in speaker_annos:
+                f.write(line)
+        print(f"Saved remaining annotations to {save_file_path}")
+        speaker_annos.clear()
 
-    # import json
-    # # generate new config
-    # with open("./configs/finetune_speaker.json", 'r', encoding='utf-8') as f:
-    #     hps = json.load(f)
-    # # modify n_speakers
-    # hps['data']["n_speakers"] = 1000 + len(speaker2id)
-    # # add speaker names
-    # for speaker in speaker_names:
-    #     hps['speakers'][speaker] = speaker2id[speaker]
-    # # save modified config
-    # with open("./configs/modified_finetune_speaker.json", 'w', encoding='utf-8') as f:
-    #     json.dump(hps, f, indent=2)
-    # print("finished")
+    if len(saved_files_queue) == saved_files_queue.maxlen:
+        oldest_file = saved_files_queue[0]
+        print(f"Deleting oldest file: {oldest_file}")
+        os.remove(oldest_file)
