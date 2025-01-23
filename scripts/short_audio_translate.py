@@ -142,7 +142,6 @@ if __name__ == "__main__":
             for line in speaker_annos:
                 f.write(line)
         print(f"Saved remaining annotations to {save_file_path}")
-        speaker_annos.clear()
 
     if len(saved_files_queue) == saved_files_queue.maxlen:
         oldest_file = saved_files_queue[0]
