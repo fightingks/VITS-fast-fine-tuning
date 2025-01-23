@@ -114,7 +114,7 @@ if __name__ == "__main__":
             print(f"Processed: {processed_files}/{total_files}")
 
             # 每100次循环保存一次文件
-            if processed_files % save_interval == 0:
+            if processed_files % save_interval == 0 or processed_files == total_files+1:
                 save_file_path = f"/content/drive/MyDrive/short_character_anno_{processed_files}.txt"
                 with open(save_file_path, 'w', encoding='utf-8') as f:
                     for line in speaker_annos:
