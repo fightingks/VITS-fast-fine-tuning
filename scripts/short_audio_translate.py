@@ -36,7 +36,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--languages", default="CJE")
     parser.add_argument("--whisper_size", default="medium")
-    parser.add_argument("--last_file", type=str, help="Path to the last saved annotation file (optional)", default=None)
     args = parser.parse_args()
     if args.languages == "CJE":
         lang2token = {
@@ -71,15 +70,16 @@ if __name__ == "__main__":
     saved_files_queue = deque(maxlen=4)  # 最多保存4个文件
     save_interval = 100  # 每100次循环保存一次
 
-    # 如果提供了上次的文件，读取上次的文件内容
-    if args.last_file and os.path.exists(args.last_file):
-        with open(args.last_file, 'r', encoding='utf-8') as f:
-            last_saved_lines = f.readlines()
-        last_saved_files = [line.split("|")[0] for line in last_saved_lines]
-        print(f"Resuming from last saved file: {args.last_file}")
-    else:
-        last_saved_files = []
-        print("No last saved file provided. Starting from scratch.")
+    # 读取上次的文件内容
+    for i in os.listdir("."):
+        if "short_character_anno_" in i:
+            last_saved_files = i
+            with open(args.last_file, 'r', encoding='utf-8') as f:
+                last_saved_lines = f.readlines()            
+            print(f"Resuming from last saved file: {args.last_file}")
+        else:
+            last_saved_files = []
+            print("No last saved file provided. Starting from scratch.")
 
     for i, wavfile in enumerate(list(os.walk(parent_dir))[0][2]):
         # try to load file as audio
