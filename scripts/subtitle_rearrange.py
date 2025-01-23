@@ -3,7 +3,7 @@ import re
 from rapidfuzz import process, fuzz
 
 # 1. 读取数据文件和语句库文件
-data_file = '/content/drive/MyDrive/Basic/short_character_anno.txt'
+data_file = '/content/drive/MyDrive/short_character_anno.txt'
 text_file = '/content/drive/MyDrive/Basic/text.csv'
 
 # 读取数据文件
