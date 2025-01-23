@@ -71,7 +71,7 @@ if __name__ == "__main__":
     save_interval = 100  # 每100次循环保存一次
 
     # 读取上次的文件内容
-    for i in os.listdir("."):
+    for i in os.listdir("/content/drive/MyDrive/"):
         if "short_character_anno_" in i:
             last_saved_files = i
             with open(args.last_file, 'r', encoding='utf-8') as f:
