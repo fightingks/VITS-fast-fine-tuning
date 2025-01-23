@@ -67,18 +67,17 @@ if __name__ == "__main__":
     parent_dir += speaker
 
     # 初始化保存文件的队列
-    saved_files_queue = deque(maxlen=1)  # 最多保存1个文件
+    saved_files_queue = deque(maxlen=2)  # 最多保存1个文件
     save_interval = 100  # 每100次循环保存一次
     times = 0 
 
     # 读取上次的文件内容
     for i in os.listdir("/content/drive/MyDrive/"):
       if "short_character_anno_" in i:
-        last_saved_files = i
         with open("/content/drive/MyDrive/"+i, 'r', encoding='utf-8') as f:
-          last_saved_lines = f.readlines()            
+          speaker_annos = f.readlines()            
         print(f"Resuming from last saved file: {i}")
-        times = int(i.split(".").split("_")[-1])
+        times = int(i.split(".")[0].split("_")[-1])
         break
       else:
         last_saved_files = []
@@ -115,7 +114,7 @@ if __name__ == "__main__":
 
             # 每100次循环保存一次文件
             if processed_files % save_interval == 0:
-                save_file_path = f"short_character_anno_{processed_files}.txt"
+                save_file_path = f"/content/drive/MyDrive/short_character_anno_{processed_files}.txt"
                 with open(save_file_path, 'w', encoding='utf-8') as f:
                     for line in speaker_annos:
                         f.write(line)
