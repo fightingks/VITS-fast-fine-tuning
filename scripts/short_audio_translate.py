@@ -120,7 +120,7 @@ if __name__ == "__main__":
                     for line in speaker_annos:
                         f.write(line)
                 print(f"Saved annotation to {save_file_path}")
-                speaker_annos.clear()  # 清空已保存的注释
+
 
                 # 将当前保存的文件路径加入队列
                 saved_files_queue.append(save_file_path)
