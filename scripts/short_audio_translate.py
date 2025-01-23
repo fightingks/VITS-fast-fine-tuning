@@ -75,7 +75,8 @@ if __name__ == "__main__":
     for i in os.listdir("/content/drive/MyDrive/"):
       if "short_character_anno_" in i:
         with open("/content/drive/MyDrive/"+i, 'r', encoding='utf-8') as f:
-          speaker_annos = f.readlines()            
+          speaker_annos = f.readlines() 
+        saved_files_queue.append("/content/drive/MyDrive/"+i)          
         print(f"Resuming from last saved file: {i}")
         times = int(i.split(".")[0].split("_")[-1])
         break
