@@ -67,23 +67,29 @@ if __name__ == "__main__":
     parent_dir += speaker
 
     # 初始化保存文件的队列
-    saved_files_queue = deque(maxlen=4)  # 最多保存4个文件
+    saved_files_queue = deque(maxlen=1)  # 最多保存1个文件
     save_interval = 100  # 每100次循环保存一次
+    times = 0 
 
     # 读取上次的文件内容
     for i in os.listdir("/content/drive/MyDrive/"):
-        if "short_character_anno_" in i:
-            last_saved_files = i
-            with open(args.last_file, 'r', encoding='utf-8') as f:
-                last_saved_lines = f.readlines()            
-            print(f"Resuming from last saved file: {args.last_file}")
-        else:
-            last_saved_files = []
-            print("No last saved file provided. Starting from scratch.")
+      if "short_character_anno_" in i:
+        last_saved_files = i
+        with open("/content/drive/MyDrive/"+i, 'r', encoding='utf-8') as f:
+          last_saved_lines = f.readlines()            
+        print(f"Resuming from last saved file: {i}")
+        times = int(i.split(".").split("_")[-1])
+        break
+      else:
+        last_saved_files = []
+        print("No last saved file provided. Starting from scratch.")
 
     for i, wavfile in enumerate(list(os.walk(parent_dir))[0][2]):
         # try to load file as audio
         if wavfile.startswith("processed_"):
+            continue
+        if processed_files < times:
+            processed_files += 1
             continue
         wavfile_path = os.path.join(parent_dir, wavfile)
         if wavfile_path in last_saved_files:
