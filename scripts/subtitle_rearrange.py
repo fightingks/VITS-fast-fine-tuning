@@ -3,8 +3,8 @@ import re
 from rapidfuzz import process, fuzz
 
 # 1. 读取数据文件和语句库文件
-data_file = 'short_character_anno.txt'
-text_file = 'text.csv'
+data_file = '/content/drive/MyDrive/Basic/short_character_anno.txt'
+text_file = '/content/drive/MyDrive/Basic/text.csv'
 
 # 读取数据文件
 data_df = pd.read_csv(data_file, sep='|', names=['file_path', 'sentence'])
