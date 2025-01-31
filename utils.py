@@ -147,7 +147,7 @@ def tag_cke(text,prev_sentence=None):
 
 def load_checkpoint(checkpoint_path, model, optimizer=None, drop_speaker_emb=False):
     assert os.path.isfile(checkpoint_path)
-    checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
+    checkpoint_dict = torch.load(checkpoint_path, map_location='cpu',weights_only=True)
     iteration = checkpoint_dict['iteration']
     learning_rate = checkpoint_dict['learning_rate']
     if optimizer is not None:
