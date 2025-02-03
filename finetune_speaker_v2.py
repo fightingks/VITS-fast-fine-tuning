@@ -292,7 +292,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
 
       # Discriminator
       y_d_hat_r, y_d_hat_g, _, _ = net_d(y, y_hat.detach())
-      with autocast(enabled=False):
+      with autocast(device_type="cuda",enabled=False):
         loss_disc, losses_disc_r, losses_disc_g = discriminator_loss(y_d_hat_r, y_d_hat_g)
         loss_disc_all = loss_disc
     optim_d.zero_grad()
@@ -301,10 +301,10 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
     grad_norm_d = commons.clip_grad_value_(net_d.parameters(), None)
     scaler.step(optim_d)
 
-    with autocast(enabled=hps.train.fp16_run):
+    with autocast(device_type="cuda",enabled=hps.train.fp16_run):
       # Generator
       y_d_hat_r, y_d_hat_g, fmap_r, fmap_g = net_d(y, y_hat)
-      with autocast(enabled=False):
+      with autocast(device_type="cuda",enabled=False):
         loss_dur = torch.sum(l_length.float())
         loss_mel = F.l1_loss(y_mel, y_hat_mel) * hps.train.c_mel
         loss_kl = kl_loss(z_p, logs_q, m_p, logs_p, z_mask) * hps.train.c_kl
