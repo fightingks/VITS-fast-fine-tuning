@@ -51,8 +51,8 @@ if __name__ == "__main__":
         }
     else:
         lang2token = {
-            'zh': "[ZH]",
             'ja': "[JA]",
+            "en": "[EN]",
         }
     assert (torch.cuda.is_available()), "Please enable GPU in order to run Whisper!"
     model = whisper.load_model(args.whisper_size)
