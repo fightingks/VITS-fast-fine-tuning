@@ -79,6 +79,10 @@ if __name__ == "__main__":
         # save modified config
         with open("./configs/modified_finetune_speaker.json", 'w', encoding='utf-8') as f:
             json.dump(hps, f, indent=2)
+        hps['speakers'] = speakers
+        with open("./moegoe_config.json", 'w', encoding='utf-8') as f:
+            json.dump(hps, f, indent=2)
+            hps['speakers'] = speaker2id
 
         # STEP 3: clean annotations, replace speaker names with assigned speaker IDs
         import text
