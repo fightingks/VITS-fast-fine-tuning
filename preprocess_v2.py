@@ -82,7 +82,7 @@ if __name__ == "__main__":
         hps['speakers'] = speakers
         with open("./moegoe_config.json", 'w', encoding='utf-8') as f:
             json.dump(hps, f, indent=2)
-            hps['speakers'] = speaker2id
+        hps['speakers'] = speaker2id
 
         # STEP 3: clean annotations, replace speaker names with assigned speaker IDs
         import text
